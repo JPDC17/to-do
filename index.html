@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Site Board — Estimating &amp; Project To-Do</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🏗️</span>
+    <div>
+      <h1>Site Board</h1>
+      <p class="tagline">Estimator &amp; PM job tracker</p>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
+</header>
+
+<main class="board" id="board">
+  <section class="column" data-type="active">
+    <div class="column-head">
+      <h2>Active Jobs <span class="column-count" id="active-count">0</span></h2>
+      <p class="column-sub">Order by what needs attention first</p>
+    </div>
+    <div class="job-list" id="active-list" data-list="active"></div>
+    <button class="btn btn-add" data-add="active">+ Add Active Job</button>
+  </section>
+
+  <section class="column" data-type="bidding">
+    <div class="column-head">
+      <h2>Jobs to Bid <span class="column-count" id="bidding-count">0</span></h2>
+      <p class="column-sub">Order by bid deadline / priority</p>
+    </div>
+    <div class="job-list" id="bidding-list" data-list="bidding"></div>
+    <button class="btn btn-add" data-add="bidding">+ Add Bid</button>
+  </section>
+</main>
+
+<section class="archive-panel hidden" id="archive-panel">
+  <div class="column-head">
+    <h2>Archive <span class="column-count" id="archive-count">0</span></h2>
+    <p class="column-sub">Won, lost, and completed jobs</p>
+  </div>
+  <div class="job-list" id="archive-list"></div>
+</section>
+
+<!-- Job detail / edit modal -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+  <div class="modal" id="job-modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+
+    <div class="modal-body" id="modal-body"><!-- injected --></div>
+  </div>
+</div>
+
+<template id="new-job-defaults"></template>
+
+<script src="app.js"></script>
+</body>
+</html>
