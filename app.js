@@ -114,8 +114,19 @@
   let archiveVisible = false;
   let activeModalJobId = null;
 
+  const saveStatusEl = document.getElementById("save-status");
+  let saveStatusTimer = null;
+
   function saveJobs() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    if (saveStatusEl) {
+      const now = new Date();
+      saveStatusEl.textContent = `Saved to this browser at ${now.toLocaleTimeString()}`;
+      clearTimeout(saveStatusTimer);
+      saveStatusTimer = setTimeout(() => {
+        saveStatusEl.textContent = "";
+      }, 4000);
+    }
   }
 
   function getJob(id) {
@@ -329,6 +340,63 @@
     archivePanel.classList.toggle("hidden", !archiveVisible);
     archiveToggleBtn.textContent = archiveVisible ? "Hide Archive" : "Archive";
     if (archiveVisible) archivePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // ---------------- Export / Import (real file on disk) ----------------
+
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const dataStr = JSON.stringify(jobs, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = todayStr();
+    a.href = url;
+    a.download = `site-board-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  const importBtn = document.getElementById("import-btn");
+  const importFileInput = document.getElementById("import-file-input");
+
+  importBtn.addEventListener("click", () => {
+    importFileInput.value = "";
+    importFileInput.click();
+  });
+
+  importFileInput.addEventListener("change", () => {
+    const file = importFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try {
+        parsed = JSON.parse(reader.result);
+      } catch (e) {
+        alert("That file isn't valid JSON. Nothing was changed.");
+        return;
+      }
+      if (!Array.isArray(parsed)) {
+        alert("That file doesn't look like a Site Board export. Nothing was changed.");
+        return;
+      }
+      const confirmMsg =
+        `Import ${parsed.length} job(s) from "${file.name}"?\n\n` +
+        `This will replace everything currently on this board. ` +
+        `Consider clicking Export first if you want to keep a backup of what's here now.`;
+      if (!confirm(confirmMsg)) return;
+      jobs = parsed;
+      closeModal();
+      archiveVisible = false;
+      archivePanel.classList.add("hidden");
+      archiveToggleBtn.textContent = "Archive";
+      saveJobs();
+      render();
+      alert(`Imported ${parsed.length} job(s) successfully.`);
+    };
+    reader.readAsText(file);
   });
 
   // ---------------- Modal ----------------

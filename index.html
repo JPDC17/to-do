@@ -19,8 +19,14 @@
 
   <div class="stats" id="stats"></div>
 
-  <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="export-btn" title="Save all data to a .json file on your computer">Export</button>
+    <button class="btn btn-ghost" id="import-btn" title="Load data from a previously exported .json file">Import</button>
+    <input type="file" id="import-file-input" accept="application/json" class="hidden" />
+    <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
+  </div>
 </header>
+<p class="save-status" id="save-status"></p>
 
 <main class="board" id="board">
   <section class="column" data-type="active">

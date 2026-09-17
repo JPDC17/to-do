@@ -49,6 +49,24 @@ body {
   margin-left: auto;
 }
 
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-status {
+  margin: 0;
+  padding: 4px 24px 0;
+  font-size: 11.5px;
+  color: var(--gray-400);
+  min-height: 18px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: right;
+}
+
 .stat-pill {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
