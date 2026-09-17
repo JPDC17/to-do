@@ -51,6 +51,13 @@
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function fmtDateTime(isoLocal) {
+    if (!isoLocal) return "";
+    const d = new Date(isoLocal);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
   function fmtMoney(n) {
     if (n === null || n === undefined || n === "") return "";
     const num = Number(n);
@@ -251,6 +258,18 @@
     list.forEach((job) => container.appendChild(renderJobCard(job)));
   }
 
+  function outstandingReminderCount() {
+    const now = new Date();
+    let count = 0;
+    jobs.forEach((job) => {
+      if (job.archived) return;
+      (itemsFor(job) || []).forEach((item) => {
+        if (item.reminderAt && !item.done && new Date(item.reminderAt) <= now) count++;
+      });
+    });
+    return count;
+  }
+
   function renderStats() {
     const activeJobs = jobs.filter((j) => j.type === "active" && !j.archived);
     const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived);
@@ -259,12 +278,14 @@
       return d !== null && d >= 0 && d <= 7;
     });
     const overdue = jobs.filter((j) => !j.archived && daysUntil(j.keyDate) !== null && daysUntil(j.keyDate) < 0);
+    const remindersDue = outstandingReminderCount();
 
     statsEl.innerHTML = `
       <span class="stat-pill"><strong>${activeJobs.length}</strong> active</span>
       <span class="stat-pill"><strong>${biddingJobs.length}</strong> bidding</span>
       <span class="stat-pill ${dueSoon.length ? "warn" : ""}"><strong>${dueSoon.length}</strong> bids due in 7d</span>
       ${overdue.length ? `<span class="stat-pill danger"><strong>${overdue.length}</strong> overdue</span>` : ""}
+      ${remindersDue ? `<span class="stat-pill danger"><strong>${remindersDue}</strong> 🔔 due</span>` : ""}
     `;
   }
 
@@ -452,6 +473,82 @@
     localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
     hideBackupBanner();
   });
+
+  // ---------------- Task reminders ----------------
+
+  const REMINDER_CHECK_INTERVAL_MS = 30000;
+  const reminderToastsEl = document.getElementById("reminder-toasts");
+  let reminderToastSeq = 0;
+
+  function maybeRequestNotificationPermission() {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
+  function showReminderToast(job, item) {
+    const toastId = "toast-" + ++reminderToastSeq;
+    const toast = document.createElement("div");
+    toast.className = "reminder-toast";
+    toast.id = toastId;
+    toast.innerHTML = `
+      <div class="reminder-toast-icon">🔔</div>
+      <div class="reminder-toast-body">
+        <p class="reminder-toast-title">${escapeHtml(item.text)}</p>
+        <p class="reminder-toast-job">${escapeHtml(job.name || "Untitled Job")}</p>
+      </div>
+      <div class="reminder-toast-actions">
+        <button class="btn btn-primary btn-small" data-action="view">View</button>
+        <button class="btn btn-ghost btn-small" data-action="dismiss">Dismiss</button>
+      </div>
+    `;
+    toast.querySelector('[data-action="view"]').addEventListener("click", () => {
+      toast.remove();
+      openModal(job.id);
+    });
+    toast.querySelector('[data-action="dismiss"]').addEventListener("click", () => {
+      toast.remove();
+    });
+    reminderToastsEl.appendChild(toast);
+  }
+
+  function fireOsNotification(job, item) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      const n = new Notification(`⏰ ${item.text}`, {
+        body: job.name || "Untitled Job",
+        tag: item.id,
+      });
+      n.onclick = () => {
+        window.focus();
+        openModal(job.id);
+      };
+    } catch (e) {
+      /* some environments (e.g. certain packaged-app contexts) may reject silently */
+    }
+  }
+
+  function checkReminders() {
+    const now = new Date();
+    let anyFired = false;
+    jobs.forEach((job) => {
+      if (job.archived) return;
+      (itemsFor(job) || []).forEach((item) => {
+        if (!item.reminderAt || item.done || item.reminded) return;
+        if (new Date(item.reminderAt) > now) return;
+        item.reminded = true;
+        anyFired = true;
+        fireOsNotification(job, item);
+        showReminderToast(job, item);
+      });
+    });
+    if (anyFired) {
+      saveJobs();
+      renderStats();
+    }
+  }
+
+  setInterval(checkReminders, REMINDER_CHECK_INTERVAL_MS);
 
   const importBtn = document.getElementById("import-btn");
   const importFileInput = document.getElementById("import-file-input");
@@ -797,15 +894,33 @@
 
     // Checklist rendering
     const checklistEl = document.getElementById("checklist-el");
+    const remindEditingIds = new Set();
+
     function renderChecklist() {
       checklistEl.innerHTML = "";
       items.forEach((item) => {
         const li = document.createElement("li");
         li.className = "checklist-item" + (item.done ? " done" : "");
+
+        const showReminderRow = Boolean(item.reminderAt) || remindEditingIds.has(item.id);
+        const passed = item.reminderAt && new Date(item.reminderAt) <= new Date();
+        const badgeClass = !item.reminderAt ? "" : item.done ? "reminder-badge-done" : passed ? "reminder-badge-due" : "reminder-badge-upcoming";
+        const badgeText = item.reminderAt
+          ? `⏰ ${fmtDateTime(item.reminderAt)}${passed && !item.done ? " (due)" : ""}`
+          : "";
+
         li.innerHTML = `
-          <input type="checkbox" ${item.done ? "checked" : ""} />
-          <span class="item-text">${escapeHtml(item.text)}</span>
-          <button class="item-remove" title="Remove">✕</button>
+          <div class="checklist-item-row">
+            <input type="checkbox" ${item.done ? "checked" : ""} />
+            <span class="item-text">${escapeHtml(item.text)}</span>
+            <button class="item-remind${item.reminderAt ? " active" : ""}" title="Set reminder">🔔</button>
+            <button class="item-remove" title="Remove">✕</button>
+          </div>
+          <div class="reminder-row ${showReminderRow ? "" : "hidden"}">
+            <input type="datetime-local" class="reminder-input" value="${item.reminderAt || ""}" />
+            ${badgeText ? `<span class="reminder-badge ${badgeClass}">${badgeText}</span>` : ""}
+            ${item.reminderAt ? `<button class="reminder-clear" title="Remove reminder">Clear</button>` : ""}
+          </div>
         `;
         li.querySelector('input[type="checkbox"]').addEventListener("change", (e) => {
           item.done = e.target.checked;
@@ -822,6 +937,34 @@
           updateProgressLabels();
           updateCardsOnly();
         });
+        li.querySelector(".item-remind").addEventListener("click", () => {
+          remindEditingIds.add(item.id);
+          renderChecklist();
+          const input = checklistEl.querySelector(`[data-item-id="${item.id}"] .reminder-input`);
+          if (input) input.focus();
+        });
+        const reminderInput = li.querySelector(".reminder-input");
+        reminderInput.addEventListener("change", (e) => {
+          maybeRequestNotificationPermission();
+          item.reminderAt = e.target.value || null;
+          item.reminded = false;
+          remindEditingIds.delete(item.id);
+          saveJobs();
+          renderChecklist();
+          updateCardsOnly();
+        });
+        const clearBtn = li.querySelector(".reminder-clear");
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => {
+            item.reminderAt = null;
+            item.reminded = false;
+            remindEditingIds.delete(item.id);
+            saveJobs();
+            renderChecklist();
+            updateCardsOnly();
+          });
+        }
+        li.dataset.itemId = item.id;
         checklistEl.appendChild(li);
       });
     }
@@ -955,6 +1098,10 @@
   // ---------------- Init ----------------
   render();
   if (FS_SUPPORTED) setConnectUiState("none");
-  tryAutoLoadFromConnectedFile().then(checkBackupReminder);
+  tryAutoLoadFromConnectedFile().then(() => {
+    checkBackupReminder();
+    checkReminders();
+  });
   checkBackupReminder();
+  checkReminders();
 })();
