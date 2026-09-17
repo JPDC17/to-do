@@ -31,13 +31,22 @@
   <div class="topbar-actions">
     <button class="btn btn-primary hidden" id="install-btn" title="Install Site Board as an app on this computer">⤓ Install App</button>
     <button class="btn btn-ghost hidden" id="connect-file-btn" title="Link a file on disk that auto-loads and auto-saves every time you open this app">🔗 Connect Save File</button>
-    <button class="btn btn-ghost" id="export-btn" title="Save all data to a .json file on your computer">Export</button>
+    <button class="btn btn-ghost" id="export-btn" title="Save all data to a .json file on your computer (Ctrl/Cmd+S)">Export</button>
     <button class="btn btn-ghost" id="import-btn" title="Load data from a previously exported .json file">Import</button>
     <input type="file" id="import-file-input" accept="application/json" class="hidden" />
     <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
   </div>
 </header>
 <div class="segment-divider" aria-hidden="true"></div>
+
+<div class="backup-banner hidden" id="backup-banner">
+  <span class="backup-banner-text" id="backup-banner-text"></span>
+  <div class="backup-banner-actions">
+    <button class="btn btn-primary btn-small" id="backup-banner-export">Export Now</button>
+    <button class="btn btn-ghost btn-small" id="backup-banner-dismiss">Remind Me Later</button>
+  </div>
+</div>
+
 <p class="save-status" id="save-status"></p>
 
 <main class="board" id="board">

@@ -2,6 +2,11 @@
   "use strict";
 
   const STORAGE_KEY = "site_board_jobs_v1";
+  const LAST_EXPORT_KEY = "site_board_last_export_at";
+  const FIRST_USE_KEY = "site_board_first_use_at";
+  const SNOOZE_KEY = "site_board_backup_snooze_until";
+  const REMINDER_INTERVAL_MS = 7 * 86400000;
+  const SNOOZE_MS = 3 * 86400000;
 
   const BID_CHECKLIST_TEMPLATE = [
     "Review plans & specifications",
@@ -119,6 +124,9 @@
 
   function saveJobs() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    if (!localStorage.getItem(FIRST_USE_KEY)) {
+      localStorage.setItem(FIRST_USE_KEY, String(Date.now()));
+    }
     if (saveStatusEl) {
       const now = new Date();
       const dest = connectedFileHandle ? `to ${connectedFileHandle.name}` : "to this browser";
@@ -129,6 +137,7 @@
       }, 4000);
     }
     writeToConnectedFile();
+    checkBackupReminder();
   }
 
   function getJob(id) {
@@ -346,7 +355,7 @@
 
   // ---------------- Export / Import (real file on disk) ----------------
 
-  document.getElementById("export-btn").addEventListener("click", () => {
+  function exportJobs() {
     const dataStr = JSON.stringify(jobs, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -358,6 +367,70 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    localStorage.setItem(LAST_EXPORT_KEY, String(Date.now()));
+    localStorage.removeItem(SNOOZE_KEY);
+    hideBackupBanner();
+  }
+
+  document.getElementById("export-btn").addEventListener("click", exportJobs);
+
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      exportJobs();
+    }
+  });
+
+  // ---------------- Backup reminder banner ----------------
+
+  const backupBanner = document.getElementById("backup-banner");
+  const backupBannerText = document.getElementById("backup-banner-text");
+
+  function hideBackupBanner() {
+    backupBanner.classList.add("hidden");
+  }
+
+  function showBackupBanner(days, everExported) {
+    backupBannerText.innerHTML = everExported
+      ? `⚠ It's been <strong>${days} days</strong> since your last backup export — worth exporting in case anything happens to this browser.`
+      : `⚠ You've been using this board for <strong>${days} days</strong> without an export — click Export (or Ctrl/Cmd+S) to save a backup copy.`;
+    backupBanner.classList.remove("hidden");
+  }
+
+  function checkBackupReminder() {
+    // A connected save file already keeps a real, current backup on disk — no need to nag.
+    if (connectedFileHandle) {
+      hideBackupBanner();
+      return;
+    }
+    if (jobs.length === 0) {
+      hideBackupBanner();
+      return;
+    }
+    const snoozeUntil = Number(localStorage.getItem(SNOOZE_KEY) || 0);
+    if (Date.now() < snoozeUntil) {
+      hideBackupBanner();
+      return;
+    }
+    const lastExport = Number(localStorage.getItem(LAST_EXPORT_KEY) || 0);
+    const firstUse = Number(localStorage.getItem(FIRST_USE_KEY) || 0);
+    const reference = lastExport || firstUse;
+    if (!reference) {
+      hideBackupBanner();
+      return;
+    }
+    const elapsed = Date.now() - reference;
+    if (elapsed >= REMINDER_INTERVAL_MS) {
+      showBackupBanner(Math.floor(elapsed / 86400000), Boolean(lastExport));
+    } else {
+      hideBackupBanner();
+    }
+  }
+
+  document.getElementById("backup-banner-export").addEventListener("click", exportJobs);
+  document.getElementById("backup-banner-dismiss").addEventListener("click", () => {
+    localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+    hideBackupBanner();
   });
 
   const importBtn = document.getElementById("import-btn");
@@ -862,5 +935,6 @@
   // ---------------- Init ----------------
   render();
   if (FS_SUPPORTED) setConnectUiState("none");
-  tryAutoLoadFromConnectedFile();
+  tryAutoLoadFromConnectedFile().then(checkBackupReminder);
+  checkBackupReminder();
 })();

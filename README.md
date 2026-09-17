@@ -28,7 +28,7 @@ A single-page to-do board built for construction estimating and project manageme
 - Each job tracks client, location, priority, a key date (bid due date or target completion), estimated/contract value, and notes.
 - Progress bars, overdue/due-soon highlighting, and a top summary bar (active count, bids in progress, bids due in 7 days, overdue).
 - Everything auto-saves to the browser's `localStorage` — no account, no server, no data leaves your machine.
-- **Export / Import**: click **Export** anytime to save a real `.json` backup file to your computer, and **Import** to load one back in (e.g. after clearing browser data, switching browsers, or to move your board onto another machine by copying the file over — a synced folder like Dropbox/Google Drive works well for that).
+- **Export / Import**: click **Export** (or press **Ctrl/Cmd+S** anywhere in the app) anytime to save a real `.json` backup file to your computer, and **Import** to load one back in (e.g. after clearing browser data, switching browsers, or to move your board onto another machine by copying the file over — a synced folder like Dropbox/Google Drive works well for that). A dismissible reminder banner appears if it's been 7+ days since your last export (it stays quiet if you're using Connect Save File below, since that's always current).
 - **Connect Save File** (Chrome/Edge only): link an actual file on disk once, and the app automatically loads it on startup and writes to it on every change — no more clicking Export/Import by hand. See below.
 
 ## Running it
