@@ -658,6 +658,38 @@
     renderStats();
   }
 
+  // ---------------- PWA install + offline support ----------------
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+
+  let deferredInstallPrompt = null;
+  const installBtn = document.getElementById("install-btn");
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.classList.remove("hidden");
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    installBtn.disabled = true;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.classList.add("hidden");
+    installBtn.disabled = false;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    installBtn.classList.add("hidden");
+    deferredInstallPrompt = null;
+  });
+
   // ---------------- Init ----------------
   render();
 })();
