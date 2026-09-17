@@ -190,7 +190,7 @@
         <span class="due ${due.cls}">${due.text}</span>
         <span class="job-value">${fmtMoney(job.value)}</span>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${prog.pct}%"></div></div>
+      <div class="progress-track"><div class="progress-fill${prog.pct === 100 ? " complete" : ""}" style="width:${prog.pct}%"></div></div>
       <div class="progress-label">${prog.done}/${prog.total} ${job.type === "bidding" ? "checklist items" : "tasks"} complete</div>
     `;
 
