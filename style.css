@@ -1,13 +1,13 @@
 :root {
-  --bg: #f4efe3;
-  --bg-panel: #ece3d0;
-  --bg-card: #fffcf6;
-  --bg-input: #fbf7ee;
-  --ink: #2a2f2a;
-  --ink-soft: #6b6656;
-  --ink-faint: #a39c88;
-  --line: #ddd2b8;
-  --line-strong: #c7b995;
+  --bg: #e8dcc0;
+  --bg-panel: #ddcc9f;
+  --bg-card: #fbf6ea;
+  --bg-input: #f3ecd8;
+  --ink: #2a2f22;
+  --ink-soft: #5f5940;
+  --ink-faint: #8c8262;
+  --line: #cab984;
+  --line-strong: #b09d68;
   --navy: #2c3e50;
   --orange: #d9662a;
   --orange-dark: #b8511e;
@@ -48,12 +48,14 @@ body {
 
 .segment-divider {
   height: 4px;
-  background: repeating-linear-gradient(
-    115deg,
-    var(--orange) 0 18px,
-    var(--navy) 18px 22px
+  background: linear-gradient(
+    90deg,
+    var(--orange-dark),
+    var(--orange) 25%,
+    var(--amber) 50%,
+    var(--orange) 75%,
+    var(--orange-dark)
   );
-  opacity: 0.85;
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
