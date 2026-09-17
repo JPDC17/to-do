@@ -421,6 +421,42 @@ body {
   letter-spacing: 0.2px;
 }
 
+.next-up {
+  list-style: none;
+  margin: 9px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.next-up li {
+  font-size: 11.5px;
+  color: var(--white-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 13px;
+  position: relative;
+}
+.next-up li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: var(--red-2);
+}
+.next-up li.next-up-more {
+  font-style: italic;
+  opacity: 0.7;
+}
+.next-up li.next-up-more::before { content: ""; }
+
+.next-up-done {
+  margin: 9px 0 0;
+  font-size: 11.5px;
+  color: var(--white);
+  text-shadow: 0 0 6px var(--white-glow);
+}
+
 .job-value {
   font-weight: 700;
   font-family: var(--font-mono);

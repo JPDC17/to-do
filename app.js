@@ -55,7 +55,7 @@
     if (n === null || n === undefined || n === "") return "";
     const num = Number(n);
     if (Number.isNaN(num)) return "";
-    return num.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    return "CA$" + num.toLocaleString("en-CA", { maximumFractionDigits: 0 });
   }
 
   function escapeHtml(str) {
@@ -173,6 +173,25 @@
     return { cls: "", text: `${label}: ${fmtDate(job.keyDate)}` };
   }
 
+  const NEXT_UP_LIMIT = 3;
+
+  function nextUpHtml(job) {
+    const items = itemsFor(job) || [];
+    if (items.length === 0) return "";
+    const incomplete = items.filter((i) => !i.done);
+    if (incomplete.length === 0) {
+      return `<p class="next-up-done">✓ All items complete</p>`;
+    }
+    const preview = incomplete.slice(0, NEXT_UP_LIMIT);
+    const remaining = incomplete.length - preview.length;
+    return `
+      <ul class="next-up">
+        ${preview.map((i) => `<li>${escapeHtml(i.text)}</li>`).join("")}
+        ${remaining > 0 ? `<li class="next-up-more">+${remaining} more</li>` : ""}
+      </ul>
+    `;
+  }
+
   function renderJobCard(job) {
     const card = document.createElement("div");
     card.className = `job-card priority-${job.priority}`;
@@ -203,6 +222,7 @@
       </div>
       <div class="progress-track"><div class="progress-fill${prog.pct === 100 ? " complete" : ""}" style="width:${prog.pct}%"></div></div>
       <div class="progress-label">${prog.done}/${prog.total} ${job.type === "bidding" ? "checklist items" : "tasks"} complete</div>
+      ${nextUpHtml(job)}
     `;
 
     card.addEventListener("click", () => openModal(job.id));
@@ -710,7 +730,7 @@
           <input id="field-date" type="date" value="${job.keyDate || ""}" />
         </div>
         <div class="field">
-          <label for="field-value">${isBid ? "Estimated Bid Value ($)" : "Contract Value ($)"}</label>
+          <label for="field-value">${isBid ? "Estimated Bid Value (CAD)" : "Contract Value (CAD)"}</label>
           <input id="field-value" type="number" min="0" step="1000" value="${job.value === "" || job.value == null ? "" : job.value}" />
         </div>
         <div class="field full">
