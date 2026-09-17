@@ -17,6 +17,7 @@ function createWindow() {
     icon: path.join(__dirname, "build", "icon.ico"),
     backgroundColor: "#e8dcc0",
     autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -24,6 +25,24 @@ function createWindow() {
   });
 
   Menu.setApplicationMenu(null);
+
+  // Windows sometimes refuses to hand a newly-launched app real keyboard/mouse
+  // focus (its foreground-lock focus-stealing prevention). Without this, the
+  // window can appear fully rendered but not accept any clicks or typing.
+  win.once("ready-to-show", () => {
+    win.show();
+    win.focus();
+    win.webContents.focus();
+    if (process.platform === "win32") {
+      win.setAlwaysOnTop(true);
+      win.setAlwaysOnTop(false);
+    }
+  });
+
+  win.on("focus", () => {
+    win.webContents.focus();
+  });
+
   win.loadFile(resolveAppPath("index.html"));
 }
 
