@@ -29,6 +29,7 @@ A single-page to-do board built for construction estimating and project manageme
 - Progress bars, overdue/due-soon highlighting, and a top summary bar (active count, bids in progress, bids due in 7 days, overdue).
 - Everything auto-saves to the browser's `localStorage` — no account, no server, no data leaves your machine.
 - **Export / Import**: click **Export** anytime to save a real `.json` backup file to your computer, and **Import** to load one back in (e.g. after clearing browser data, switching browsers, or to move your board onto another machine by copying the file over — a synced folder like Dropbox/Google Drive works well for that).
+- **Connect Save File** (Chrome/Edge only): link an actual file on disk once, and the app automatically loads it on startup and writes to it on every change — no more clicking Export/Import by hand. See below.
 
 ## Running it
 
@@ -39,6 +40,19 @@ python3 -m http.server 8000
 ```
 
 then visit `http://localhost:8000`.
+
+## Auto-loading your last saved session (Connect Save File)
+
+By default the board remembers your data in the browser's storage automatically — reopen the same browser on the same computer and it's exactly as you left it. **Connect Save File** goes one step further: it links the app to a real `.json` file on your disk so that file itself always holds the current state, and the app reads it back automatically every time you open the page.
+
+1. Click **🔗 Connect Save File** in the top bar.
+2. Pick where to save it (or select an existing exported backup to pick up where it left off — you'll be asked before it overwrites what's on screen).
+3. From then on, every change auto-writes to that file, and opening the app auto-loads from it — including if you move that file into a synced Dropbox/Google Drive/OneDrive folder, so a *second* machine pointed at the same synced file effectively sees the same board.
+
+Notes:
+- This uses the browser's File System Access API, currently **Chrome and Edge only** (desktop). Firefox and Safari will simply not show the button — use Export/Import instead.
+- After a full browser restart, Chrome may ask you to confirm access again for security reasons — if so, the button changes to **🔗 Reconnect \<filename\>**; one click restores auto-sync.
+- Disconnecting (click the button again while connected) just stops the auto-sync — nothing is deleted, and the file keeps whatever was last written to it.
 
 ## Installing it as a desktop app
 

@@ -154,6 +154,15 @@ body {
   color: var(--red-2);
   box-shadow: 0 0 10px var(--red-glow);
 }
+.btn-ghost.connected {
+  border-color: var(--white-dim);
+  color: var(--white);
+}
+.btn-ghost.needs-attention {
+  border-color: var(--white);
+  color: var(--white);
+  box-shadow: 0 0 10px var(--white-glow);
+}
 
 .btn-add {
   margin: 12px 16px 16px;

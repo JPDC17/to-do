@@ -121,12 +121,14 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
     if (saveStatusEl) {
       const now = new Date();
-      saveStatusEl.textContent = `Saved to this browser at ${now.toLocaleTimeString()}`;
+      const dest = connectedFileHandle ? `to ${connectedFileHandle.name}` : "to this browser";
+      saveStatusEl.textContent = `Saved ${dest} at ${now.toLocaleTimeString()}`;
       clearTimeout(saveStatusTimer);
       saveStatusTimer = setTimeout(() => {
         saveStatusEl.textContent = "";
       }, 4000);
     }
+    writeToConnectedFile();
   }
 
   function getJob(id) {
@@ -398,6 +400,173 @@
     };
     reader.readAsText(file);
   });
+
+  // ---------------- Connected save file (auto-load / auto-save via File System Access API) ----------------
+
+  const FS_SUPPORTED = "showSaveFilePicker" in window && "indexedDB" in window;
+  const IDB_NAME = "site_board_fs";
+  const IDB_STORE = "handles";
+  const IDB_KEY = "saveFile";
+
+  let connectedFileHandle = null;
+  const connectFileBtn = document.getElementById("connect-file-btn");
+
+  function openIdb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbGet(key) {
+    const db = await openIdb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readonly");
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, value) {
+    const db = await openIdb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbDelete(key) {
+    const db = await openIdb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function verifyPermission(handle, requestIfNeeded) {
+    const opts = { mode: "readwrite" };
+    if ((await handle.queryPermission(opts)) === "granted") return true;
+    if (!requestIfNeeded) return false;
+    return (await handle.requestPermission(opts)) === "granted";
+  }
+
+  function setConnectUiState(state, name) {
+    if (!FS_SUPPORTED) return;
+    connectFileBtn.classList.remove("hidden");
+    connectFileBtn.classList.remove("connected", "needs-attention");
+    if (state === "connected") {
+      connectFileBtn.textContent = `🔗 ${name}`;
+      connectFileBtn.title = "Auto-syncing to this file. Click to disconnect.";
+      connectFileBtn.classList.add("connected");
+    } else if (state === "needs-attention") {
+      connectFileBtn.textContent = `🔗 Reconnect ${name}`;
+      connectFileBtn.title = "Click to resume auto-sync with this file";
+      connectFileBtn.classList.add("needs-attention");
+    } else {
+      connectFileBtn.textContent = "🔗 Connect Save File";
+      connectFileBtn.title = "Link a file on disk that auto-loads and auto-saves every time you open this app";
+    }
+  }
+
+  async function writeToConnectedFile() {
+    if (!connectedFileHandle) return;
+    try {
+      const writable = await connectedFileHandle.createWritable();
+      await writable.write(JSON.stringify(jobs, null, 2));
+      await writable.close();
+    } catch (e) {
+      console.warn("Could not write to connected file", e);
+    }
+  }
+
+  async function connectSaveFile() {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: "site-board-data.json",
+        types: [{ description: "Site Board data", accept: { "application/json": [".json"] } }],
+      });
+      let existingJobs = null;
+      try {
+        const file = await handle.getFile();
+        if (file.size > 0) {
+          const parsed = JSON.parse(await file.text());
+          if (Array.isArray(parsed)) existingJobs = parsed;
+        }
+      } catch (e) {
+        /* not readable / not JSON yet — treat as a fresh file */
+      }
+      if (
+        existingJobs &&
+        existingJobs.length &&
+        confirm(`"${handle.name}" already has ${existingJobs.length} job(s) saved. Load them now (replacing what's on screen)?`)
+      ) {
+        jobs = existingJobs;
+      }
+      connectedFileHandle = handle;
+      await idbSet(IDB_KEY, handle);
+      saveJobs();
+      render();
+      setConnectUiState("connected", handle.name);
+    } catch (e) {
+      if (e.name !== "AbortError") alert("Couldn't connect to a file: " + e.message);
+    }
+  }
+
+  async function disconnectSaveFile() {
+    connectedFileHandle = null;
+    await idbDelete(IDB_KEY).catch(() => {});
+    setConnectUiState("none");
+  }
+
+  if (connectFileBtn) {
+    connectFileBtn.addEventListener("click", async () => {
+      if (connectedFileHandle) {
+        if (confirm(`Disconnect from "${connectedFileHandle.name}"? Your data stays in this browser and in that file — it just won't auto-sync anymore.`)) {
+          await disconnectSaveFile();
+        }
+      } else if (connectFileBtn.classList.contains("needs-attention")) {
+        const handle = await idbGet(IDB_KEY);
+        if (handle && (await verifyPermission(handle, true))) {
+          connectedFileHandle = handle;
+          try {
+            const parsed = JSON.parse(await (await handle.getFile()).text());
+            if (Array.isArray(parsed)) jobs = parsed;
+          } catch (e) {}
+          saveJobs();
+          render();
+          setConnectUiState("connected", handle.name);
+        }
+      } else {
+        connectSaveFile();
+      }
+    });
+  }
+
+  async function tryAutoLoadFromConnectedFile() {
+    if (!FS_SUPPORTED) return;
+    try {
+      const handle = await idbGet(IDB_KEY);
+      if (!handle) return;
+      const granted = await verifyPermission(handle, false);
+      if (!granted) {
+        setConnectUiState("needs-attention", handle.name);
+        return;
+      }
+      connectedFileHandle = handle;
+      const parsed = JSON.parse(await (await handle.getFile()).text());
+      if (Array.isArray(parsed)) {
+        jobs = parsed;
+        render();
+      }
+      setConnectUiState("connected", handle.name);
+    } catch (e) {
+      console.warn("Could not auto-load connected file", e);
+    }
+  }
 
   // ---------------- Modal ----------------
 
@@ -692,4 +861,6 @@
 
   // ---------------- Init ----------------
   render();
+  if (FS_SUPPORTED) setConnectUiState("none");
+  tryAutoLoadFromConnectedFile();
 })();
