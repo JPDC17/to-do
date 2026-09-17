@@ -1,0 +1,50 @@
+{
+  "name": "task-sheet-desktop",
+  "version": "1.0.0",
+  "description": "Task Sheet — construction estimator & PM to-do board, packaged as a desktop app",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.tasksheet.app",
+    "productName": "Task Sheet",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "..",
+        "to": "app",
+        "filter": [
+          "index.html",
+          "style.css",
+          "app.js",
+          "manifest.json",
+          "sw.js",
+          "icons/**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "TaskSheet-Portable.exe"
+    }
+  }
+}

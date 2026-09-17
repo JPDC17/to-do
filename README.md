@@ -69,9 +69,30 @@ The board is a PWA (Progressive Web App), so Chrome or Edge can install it as it
 
 Once installed, it opens like any other app on your computer and still saves to that browser profile's storage — use **Export**/**Import** (above) to move data between machines or browsers.
 
+## Desktop app (.exe, not browser-based)
+
+`desktop/` wraps the exact same app in [Electron](https://www.electronjs.org/) so it runs as a real Windows executable — its own window, its own icon, no browser involved at all. It loads the same `index.html`/`style.css`/`app.js` from the parent folder, so any change made to those files applies the next time you rebuild.
+
+**Build it yourself** (needs [Node.js](https://nodejs.org) installed):
+
+```bash
+cd desktop
+npm install
+npm run dist:win
+```
+
+The finished executable lands at `desktop/dist/TaskSheet-Portable.exe` — a single **portable** file (no installer, nothing written to Program Files). Copy it anywhere and double-click to run; it carries its own copy of the app.
+
+Notes:
+- It's unsigned (no paid code-signing certificate), so Windows SmartScreen will likely show an "unknown publisher" warning the first time you run it — click **More info → Run anyway**. This is normal for small independent tools and not a sign anything is wrong.
+- Data still saves via the same `localStorage` (and Connect Save File, Export/Import) as the browser version — those all work identically inside Electron's window, since it's the same Chromium engine under the hood.
+- It's noticeably larger than the web files alone (~70MB) because Electron bundles its own copy of Chromium and Node.js so it needs no browser installed at all.
+- To rebuild after changing the icon, regenerate `desktop/build/icon.ico` (any standard multi-resolution `.ico`, ideally including a 256×256 entry) before running `npm run dist:win`.
+
 ## Files
 
 - `index.html` — page structure
 - `style.css` — styling
 - `app.js` — app logic and data model (vanilla JS, no dependencies)
 - `manifest.json` / `sw.js` / `icons/` — PWA install support (app icon, offline caching)
+- `desktop/` — Electron wrapper that packages the app as a standalone Windows `.exe`
