@@ -240,7 +240,8 @@ body {
 .board {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  align-items: start;
+  gap: 22px;
   padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
@@ -292,10 +293,10 @@ body {
 }
 
 .job-list {
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   min-height: 40px;
 }
 
@@ -318,11 +319,11 @@ body {
 .job-card {
   background: var(--bg-card);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 14px;
   box-shadow: var(--shadow);
-  padding: 12px 14px;
+  padding: 18px 20px;
   cursor: pointer;
-  border-left: 4px solid var(--line-strong);
+  border-left: 5px solid var(--line-strong);
   position: relative;
 }
 .job-card:hover { box-shadow: var(--shadow-lg); border-color: var(--line-strong); }
@@ -334,14 +335,14 @@ body {
 .job-card-top {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .drag-handle {
   cursor: grab;
   color: var(--ink-faint);
-  font-size: 13px;
+  font-size: 15px;
   padding: 2px 4px 2px 0;
   user-select: none;
 }
@@ -349,25 +350,25 @@ body {
 .job-name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 17px;
   letter-spacing: 0.1px;
   margin: 0;
   flex: 1;
   color: var(--ink);
 }
 .job-client {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
-  margin: 3px 0 0;
+  margin: 4px 0 0;
 }
 
 .badge {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   white-space: nowrap;
   border: 1px solid transparent;
@@ -380,8 +381,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-  font-size: 11.5px;
+  margin-top: 14px;
+  font-size: 12.5px;
   color: var(--ink-soft);
 }
 .job-meta-row .due.overdue {
@@ -394,44 +395,44 @@ body {
 }
 
 .progress-track {
-  height: 6px;
+  height: 8px;
   background: var(--bg-panel);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  margin-top: 10px;
+  border-radius: 5px;
+  margin-top: 12px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--orange-dark), var(--orange));
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.2s ease;
 }
 .progress-fill.complete {
   background: linear-gradient(90deg, var(--green), #4f9968);
 }
 .progress-label {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--ink-faint);
-  margin-top: 4px;
+  margin-top: 6px;
   letter-spacing: 0.1px;
 }
 
 .next-up {
   list-style: none;
-  margin: 9px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 .next-up li {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 13px;
+  padding-left: 15px;
   position: relative;
 }
 .next-up li::before {
@@ -447,14 +448,15 @@ body {
 .next-up li.next-up-more::before { content: ""; }
 
 .next-up-done {
-  margin: 9px 0 0;
-  font-size: 11.5px;
+  margin: 12px 0 0;
+  font-size: 12.5px;
   color: var(--green);
   font-weight: 600;
 }
 
 .job-value {
   font-weight: 700;
+  font-size: 13px;
   font-family: var(--font-mono);
   color: var(--navy);
   letter-spacing: 0.2px;

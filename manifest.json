@@ -1,6 +1,6 @@
 {
-  "name": "Site Board — Estimator & PM To-Do",
-  "short_name": "Site Board",
+  "name": "Task Sheet — Estimator & PM To-Do",
+  "short_name": "Task Sheet",
   "description": "Construction estimator & PM job tracker with bid checklists and active job task lists.",
   "start_url": "./index.html",
   "scope": "./",

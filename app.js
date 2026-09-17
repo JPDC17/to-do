@@ -382,7 +382,7 @@
     const a = document.createElement("a");
     const stamp = todayStr();
     a.href = url;
-    a.download = `site-board-backup-${stamp}.json`;
+    a.download = `task-sheet-backup-${stamp}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -474,7 +474,7 @@
         return;
       }
       if (!Array.isArray(parsed)) {
-        alert("That file doesn't look like a Site Board export. Nothing was changed.");
+        alert("That file doesn't look like a Task Sheet export. Nothing was changed.");
         return;
       }
       const confirmMsg =
@@ -579,8 +579,8 @@
   async function connectSaveFile() {
     try {
       const handle = await window.showSaveFilePicker({
-        suggestedName: "site-board-data.json",
-        types: [{ description: "Site Board data", accept: { "application/json": [".json"] } }],
+        suggestedName: "task-sheet-data.json",
+        types: [{ description: "Task Sheet data", accept: { "application/json": [".json"] } }],
       });
       let existingJobs = null;
       try {
