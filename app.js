@@ -550,6 +550,237 @@
 
   setInterval(checkReminders, REMINDER_CHECK_INTERVAL_MS);
 
+  // ---------------- Productivity timer ----------------
+
+  const TIMER_KEY = "site_board_timer_v1";
+  const DEFAULT_TIMER_DURATIONS = { focus: 25, short: 5, long: 15 };
+  const TIMER_MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
+
+  function defaultTimerState() {
+    return {
+      mode: "focus",
+      durations: { ...DEFAULT_TIMER_DURATIONS },
+      remainingSeconds: DEFAULT_TIMER_DURATIONS.focus * 60,
+      running: false,
+      runningSince: null,
+      sessionsCompleted: 0,
+    };
+  }
+
+  function loadTimerState() {
+    try {
+      const raw = localStorage.getItem(TIMER_KEY);
+      if (!raw) return defaultTimerState();
+      const parsed = JSON.parse(raw);
+      return { ...defaultTimerState(), ...parsed, durations: { ...DEFAULT_TIMER_DURATIONS, ...(parsed.durations || {}) } };
+    } catch (e) {
+      return defaultTimerState();
+    }
+  }
+
+  let timerState = loadTimerState();
+  if (timerState.running && timerState.runningSince) {
+    const elapsed = Math.floor((Date.now() - timerState.runningSince) / 1000);
+    timerState.remainingSeconds -= elapsed;
+    timerState.runningSince = Date.now();
+  }
+
+  function saveTimerState() {
+    localStorage.setItem(TIMER_KEY, JSON.stringify(timerState));
+  }
+
+  const timerBtn = document.getElementById("timer-btn");
+  const timerPanel = document.getElementById("timer-panel");
+  const timerDisplay = document.getElementById("timer-display");
+  const timerSessionLabel = document.getElementById("timer-session-label");
+  const timerToggleBtn = document.getElementById("timer-toggle");
+  const timerModeBtns = Array.from(document.querySelectorAll(".timer-mode-btn"));
+  const timerDurInputs = {
+    focus: document.getElementById("timer-dur-focus"),
+    short: document.getElementById("timer-dur-short"),
+    long: document.getElementById("timer-dur-long"),
+  };
+
+  function playTimerChime() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      [880, 1046].forEach((freq, i) => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+        }, i * 220);
+      });
+    } catch (e) {
+      /* audio not available in this context */
+    }
+  }
+
+  function fireTimerNotification(finishedMode) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      const body = finishedMode === "focus" ? "Focus session complete — take a break!" : "Break's over — back to focused work.";
+      new Notification("⏱ Task Sheet Timer", { body });
+    } catch (e) {
+      /* some environments may reject silently */
+    }
+  }
+
+  function showTimerToast(finishedMode, nextMode) {
+    const toast = document.createElement("div");
+    toast.className = "reminder-toast";
+    const title =
+      finishedMode === "focus" ? "Focus session complete!" : finishedMode === "short" ? "Short break's over" : "Long break's over";
+    toast.innerHTML = `
+      <div class="reminder-toast-icon">⏱</div>
+      <div class="reminder-toast-body">
+        <p class="reminder-toast-title">${title}</p>
+        <p class="reminder-toast-job">Next up: ${TIMER_MODE_LABEL[nextMode]}</p>
+      </div>
+      <div class="reminder-toast-actions">
+        <button class="btn btn-primary btn-small" data-action="start-next">Start</button>
+        <button class="btn btn-ghost btn-small" data-action="dismiss">Dismiss</button>
+      </div>
+    `;
+    toast.querySelector('[data-action="start-next"]').addEventListener("click", () => {
+      toast.remove();
+      timerState.running = true;
+      timerState.runningSince = Date.now();
+      saveTimerState();
+      renderTimer();
+    });
+    toast.querySelector('[data-action="dismiss"]').addEventListener("click", () => toast.remove());
+    reminderToastsEl.appendChild(toast);
+  }
+
+  function completeTimerPhase() {
+    const finishedMode = timerState.mode;
+    let nextMode;
+    if (finishedMode === "focus") {
+      timerState.sessionsCompleted += 1;
+      nextMode = timerState.sessionsCompleted % 4 === 0 ? "long" : "short";
+    } else {
+      nextMode = "focus";
+    }
+    playTimerChime();
+    fireTimerNotification(finishedMode);
+    showTimerToast(finishedMode, nextMode);
+    timerState.mode = nextMode;
+    timerState.remainingSeconds = timerState.durations[nextMode] * 60;
+    timerState.running = false;
+    timerState.runningSince = null;
+    saveTimerState();
+    renderTimer();
+  }
+
+  function syncTimerSettingsInputs() {
+    Object.keys(timerDurInputs).forEach((mode) => {
+      if (document.activeElement !== timerDurInputs[mode]) {
+        timerDurInputs[mode].value = timerState.durations[mode];
+      }
+    });
+  }
+
+  function renderTimer() {
+    const remaining = Math.max(timerState.remainingSeconds, 0);
+    const mm = Math.floor(remaining / 60);
+    const ss = remaining % 60;
+    const timeText = `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+
+    timerBtn.textContent = timerState.running ? `⏱ ${timeText}` : "⏱ Timer";
+    timerBtn.classList.toggle("running", timerState.running);
+
+    timerDisplay.textContent = timeText;
+    timerSessionLabel.textContent =
+      timerState.mode === "focus"
+        ? `Session ${(timerState.sessionsCompleted % 4) + 1} of 4`
+        : `${TIMER_MODE_LABEL[timerState.mode]} — session ${timerState.sessionsCompleted} done`;
+    timerToggleBtn.textContent = timerState.running ? "Pause" : "Start";
+    timerModeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === timerState.mode));
+  }
+
+  function setTimerMode(mode) {
+    timerState.mode = mode;
+    timerState.remainingSeconds = timerState.durations[mode] * 60;
+    timerState.running = false;
+    timerState.runningSince = null;
+    saveTimerState();
+    renderTimer();
+  }
+
+  timerModeBtns.forEach((btn) => {
+    btn.addEventListener("click", () => setTimerMode(btn.dataset.mode));
+  });
+
+  timerToggleBtn.addEventListener("click", () => {
+    if (timerState.running) {
+      timerState.running = false;
+      timerState.runningSince = null;
+    } else {
+      maybeRequestNotificationPermission();
+      timerState.running = true;
+      timerState.runningSince = Date.now();
+    }
+    saveTimerState();
+    renderTimer();
+  });
+
+  document.getElementById("timer-skip").addEventListener("click", () => {
+    completeTimerPhase();
+  });
+
+  document.getElementById("timer-reset").addEventListener("click", () => {
+    timerState.running = false;
+    timerState.runningSince = null;
+    timerState.remainingSeconds = timerState.durations[timerState.mode] * 60;
+    saveTimerState();
+    renderTimer();
+  });
+
+  Object.keys(timerDurInputs).forEach((mode) => {
+    timerDurInputs[mode].addEventListener("change", (e) => {
+      const minutes = Math.max(1, Math.min(180, Number(e.target.value) || DEFAULT_TIMER_DURATIONS[mode]));
+      timerState.durations[mode] = minutes;
+      if (timerState.mode === mode && !timerState.running) {
+        timerState.remainingSeconds = minutes * 60;
+      }
+      saveTimerState();
+      renderTimer();
+      syncTimerSettingsInputs();
+    });
+  });
+
+  timerBtn.addEventListener("click", () => {
+    const opening = timerPanel.classList.contains("hidden");
+    timerPanel.classList.toggle("hidden");
+    if (opening) syncTimerSettingsInputs();
+  });
+  document.getElementById("timer-close").addEventListener("click", () => {
+    timerPanel.classList.add("hidden");
+  });
+
+  setInterval(() => {
+    if (!timerState.running) return;
+    timerState.remainingSeconds -= 1;
+    if (timerState.remainingSeconds <= 0) {
+      completeTimerPhase();
+    } else {
+      saveTimerState();
+      renderTimer();
+    }
+  }, 1000);
+
+  renderTimer();
+  syncTimerSettingsInputs();
+
   const importBtn = document.getElementById("import-btn");
   const importFileInput = document.getElementById("import-file-input");
 

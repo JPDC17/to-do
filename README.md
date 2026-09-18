@@ -30,6 +30,8 @@ A single-page to-do board built for construction estimating and project manageme
 - Everything auto-saves to the browser's `localStorage` — no account, no server, no data leaves your machine.
 - **Export / Import**: click **Export** (or press **Ctrl/Cmd+S** anywhere in the app) anytime to save a real `.json` backup file to your computer, and **Import** to load one back in (e.g. after clearing browser data, switching browsers, or to move your board onto another machine by copying the file over — a synced folder like Dropbox/Google Drive works well for that). A dismissible reminder banner appears if it's been 7+ days since your last export (it stays quiet if you're using Connect Save File below, since that's always current).
 - **Connect Save File** (Chrome/Edge only): link an actual file on disk once, and the app automatically loads it on startup and writes to it on every change — no more clicking Export/Import by hand. See below.
+- **Task reminders**: click the 🔔 on any checklist/task item to set a date & time. While the app's open, it fires a native OS notification plus an in-app pop-up when that time arrives (once), and shows a "🔔 N due" count in the header.
+- **Productivity timer**: a Pomodoro-style focus timer (**⏱ Timer** in the header) — Focus/Short Break/Long Break cycles with adjustable durations, a chime + notification when a session ends, and the header button doubles as a live countdown so you can close the panel and keep working.
 
 ## Running it
 

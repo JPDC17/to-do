@@ -801,3 +801,125 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+
+/* ---------- Productivity timer ---------- */
+#timer-btn.running {
+  border-color: var(--orange);
+  color: var(--orange-dark);
+  background: var(--orange-soft);
+  font-family: var(--font-mono);
+}
+
+.timer-panel {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 200;
+  width: 280px;
+  background: var(--bg-card);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px 18px 18px;
+}
+.timer-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+.timer-panel-head button {
+  border: 1px solid var(--line-strong);
+  background: var(--bg-panel);
+  color: var(--ink-soft);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+}
+.timer-panel-head button:hover { border-color: var(--orange); color: var(--orange-dark); }
+
+.timer-modes {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-panel);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+.timer-mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+}
+.timer-mode-btn.active[data-mode="focus"] { background: var(--orange); color: #fffdf8; }
+.timer-mode-btn.active[data-mode="short"] { background: var(--green); color: #fffdf8; }
+.timer-mode-btn.active[data-mode="long"] { background: var(--navy); color: #fffdf8; }
+
+.timer-display {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+  letter-spacing: 1px;
+  margin: 4px 0 2px;
+}
+.timer-session-label {
+  text-align: center;
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  letter-spacing: 0.2px;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.timer-controls #timer-toggle { flex: 1; }
+
+.timer-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.timer-settings label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.timer-settings input {
+  width: 54px;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line);
+  background: var(--bg-input);
+  color: var(--ink);
+  text-align: center;
+}
+.timer-settings input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-soft);
+}

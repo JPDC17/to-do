@@ -29,6 +29,7 @@
   <div class="stats" id="stats"></div>
 
   <div class="topbar-actions">
+    <button class="btn btn-ghost" id="timer-btn" title="Open the productivity timer">⏱ Timer</button>
     <button class="btn btn-primary hidden" id="install-btn" title="Install Task Sheet as an app on this computer">⤓ Install App</button>
     <button class="btn btn-ghost hidden" id="connect-file-btn" title="Link a file on disk that auto-loads and auto-saves every time you open this app">🔗 Connect Save File</button>
     <button class="btn btn-ghost" id="export-btn" title="Save all data to a .json file on your computer (Ctrl/Cmd+S)">Export</button>
@@ -89,6 +90,34 @@
 <template id="new-job-defaults"></template>
 
 <div class="reminder-toasts" id="reminder-toasts" aria-live="polite"></div>
+
+<div class="timer-panel hidden" id="timer-panel">
+  <div class="timer-panel-head">
+    <span>⏱ Productivity Timer</span>
+    <button id="timer-close" aria-label="Close" title="Close">✕</button>
+  </div>
+
+  <div class="timer-modes">
+    <button class="timer-mode-btn" data-mode="focus">Focus</button>
+    <button class="timer-mode-btn" data-mode="short">Short Break</button>
+    <button class="timer-mode-btn" data-mode="long">Long Break</button>
+  </div>
+
+  <div class="timer-display" id="timer-display">25:00</div>
+  <p class="timer-session-label" id="timer-session-label">Session 1 of 4</p>
+
+  <div class="timer-controls">
+    <button class="btn btn-primary" id="timer-toggle">Start</button>
+    <button class="btn btn-secondary btn-small" id="timer-skip">Skip</button>
+    <button class="btn btn-ghost btn-small" id="timer-reset">Reset</button>
+  </div>
+
+  <div class="timer-settings">
+    <label>Focus <input type="number" min="1" max="180" id="timer-dur-focus" /> min</label>
+    <label>Short <input type="number" min="1" max="60" id="timer-dur-short" /> min</label>
+    <label>Long <input type="number" min="1" max="90" id="timer-dur-long" /> min</label>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
