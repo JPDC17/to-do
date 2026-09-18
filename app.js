@@ -781,6 +781,35 @@
   renderTimer();
   syncTimerSettingsInputs();
 
+  // ---------------- Bulldozer Run mini-game ----------------
+
+  const gameBackdrop = document.getElementById("game-backdrop");
+
+  function openGame() {
+    gameBackdrop.classList.remove("hidden");
+    if (window.__taskSheetGame) window.__taskSheetGame.start();
+  }
+  function closeGame() {
+    gameBackdrop.classList.add("hidden");
+    if (window.__taskSheetGame) window.__taskSheetGame.stop();
+  }
+
+  document.getElementById("game-btn").addEventListener("click", openGame);
+  document.getElementById("game-close").addEventListener("click", closeGame);
+  gameBackdrop.addEventListener("click", (e) => {
+    if (e.target === gameBackdrop) closeGame();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (gameBackdrop.classList.contains("hidden")) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (e.key === "Escape") {
+      closeGame();
+      return;
+    }
+    if (window.__taskSheetGame) window.__taskSheetGame.handleKey(e);
+  });
+
   const importBtn = document.getElementById("import-btn");
   const importFileInput = document.getElementById("import-file-input");
 
