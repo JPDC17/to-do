@@ -35,6 +35,7 @@
     <button class="btn btn-ghost" id="export-btn" title="Save all data to a .json file on your computer (Ctrl/Cmd+S)">Export</button>
     <button class="btn btn-ghost" id="import-btn" title="Load data from a previously exported .json file">Import</button>
     <input type="file" id="import-file-input" accept="application/json" class="hidden" />
+    <button class="btn btn-ghost" id="submitted-toggle-btn">📨 Submitted</button>
     <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
   </div>
 </header>
@@ -69,6 +70,14 @@
     <button class="btn btn-add" data-add="bidding">+ Add Bid</button>
   </section>
 </main>
+
+<section class="archive-panel hidden" id="submitted-panel">
+  <div class="column-head">
+    <h2>Submitted — Awaiting Decision <span class="column-count" id="submitted-count">0</span></h2>
+    <p class="column-sub">Bids sent, waiting to hear back</p>
+  </div>
+  <div class="job-list" id="submitted-list"></div>
+</section>
 
 <section class="archive-panel hidden" id="archive-panel">
   <div class="column-head">

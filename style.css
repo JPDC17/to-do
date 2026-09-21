@@ -499,6 +499,11 @@ body {
   border-color: rgba(192, 57, 43, 0.25);
 }
 .archive-tag.completed { color: var(--ink-soft); border-color: var(--line-strong); }
+.archive-tag.submitted {
+  color: var(--orange-dark);
+  background: var(--orange-soft);
+  border-color: rgba(217, 102, 42, 0.3);
+}
 
 .hidden { display: none !important; }
 

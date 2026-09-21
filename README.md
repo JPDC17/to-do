@@ -25,6 +25,7 @@ A single-page to-do board built for construction estimating and project manageme
   Items can be checked, added, or removed per job.
 - **Active jobs** get a starter PM task list (contract/NTP, long-lead materials, subs, permits, client updates) that you customize per project.
 - **Win / Loss workflow**: mark a bid "Won" to move it straight into Active Jobs (its task list is set up automatically), or "Lost" to send it to the Archive. Completed active jobs archive the same way.
+- **Submitted — Awaiting Decision**: for bids that have gone out but haven't been won or lost yet, click **📨 Mark Submitted** to move them out of the Jobs to Bid column into a separate collapsed section (**📨 Submitted** in the header, same collapse/expand pattern as Archive) so they're tracked without cluttering the active bid list. Shows how long each has been waiting, and you can still mark it Won/Lost from there, or **↺ Back to Bidding** if it needs revising.
 - Each job tracks client, location, priority, a key date (bid due date or target completion), estimated/contract value, and notes.
 - Progress bars, overdue/due-soon highlighting, and a top summary bar (active count, bids in progress, bids due in 7 days, overdue).
 - Everything auto-saves to the browser's `localStorage` — no account, no server, no data leaves your machine.

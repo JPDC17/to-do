@@ -45,6 +45,11 @@
     return Math.round((target - today) / 86400000);
   }
 
+  function daysSince(dateStr) {
+    if (!dateStr) return null;
+    return -daysUntil(dateStr);
+  }
+
   function fmtDate(dateStr) {
     if (!dateStr) return "No date set";
     const d = new Date(dateStr + "T00:00:00");
@@ -124,6 +129,7 @@
 
   let jobs = loadJobs();
   let archiveVisible = false;
+  let submittedVisible = false;
   let activeModalJobId = null;
 
   const saveStatusEl = document.getElementById("save-status");
@@ -156,8 +162,10 @@
   const activeListEl = document.getElementById("active-list");
   const biddingListEl = document.getElementById("bidding-list");
   const archiveListEl = document.getElementById("archive-list");
+  const submittedListEl = document.getElementById("submitted-list");
   const statsEl = document.getElementById("stats");
   const archivePanel = document.getElementById("archive-panel");
+  const submittedPanel = document.getElementById("submitted-panel");
   const archiveToggleBtn = document.getElementById("archive-toggle-btn");
 
   function itemsFor(job) {
@@ -172,12 +180,26 @@
   }
 
   function dueInfo(job) {
+    if (job.type === "bidding" && job.submitted) {
+      const waiting = daysSince(job.submittedAt);
+      if (waiting === null) return { cls: "", text: "Submitted — awaiting decision" };
+      const cls = waiting >= 14 ? "soon" : "";
+      const label = waiting === 0 ? "today" : `${waiting}d ago`;
+      return { cls, text: `Submitted ${label} — awaiting decision` };
+    }
     const d = daysUntil(job.keyDate);
     if (d === null) return { cls: "", text: "No date set" };
     const label = job.type === "bidding" ? "Bid due" : "Target";
     if (d < 0) return { cls: "overdue", text: `${label}: ${fmtDate(job.keyDate)} (overdue)` };
     if (d <= 3) return { cls: "soon", text: `${label}: ${fmtDate(job.keyDate)} (${d === 0 ? "today" : d + "d"})` };
     return { cls: "", text: `${label}: ${fmtDate(job.keyDate)}` };
+  }
+
+  function modalSubtitleText(job, prog) {
+    const isBid = job.type === "bidding";
+    const base = isBid ? "Bid checklist" : "Job task list";
+    const status = isBid && job.submitted ? " — 📨 Submitted, awaiting decision" : "";
+    return `${base}${status} — ${prog.done}/${prog.total} complete`;
   }
 
   const NEXT_UP_LIMIT = 3;
@@ -200,9 +222,10 @@
   }
 
   function renderJobCard(job) {
+    const isSortable = !job.archived && !job.submitted;
     const card = document.createElement("div");
     card.className = `job-card priority-${job.priority}`;
-    card.draggable = !job.archived;
+    card.draggable = isSortable;
     card.dataset.id = job.id;
 
     const prog = progressOf(job);
@@ -212,11 +235,13 @@
     if (job.archived) {
       const label = job.archivedReason === "won" ? "Won" : job.archivedReason === "lost" ? "Lost" : "Completed";
       tagHtml = `<span class="archive-tag ${job.archivedReason}">${label}</span>`;
+    } else if (job.submitted) {
+      tagHtml = `<span class="archive-tag submitted">Submitted</span>`;
     }
 
     card.innerHTML = `
       <div class="job-card-top">
-        ${job.archived ? "" : '<span class="drag-handle" title="Drag to reorder">⠿</span>'}
+        ${isSortable ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : ""}
         <div style="flex:1">
           <p class="job-name">${escapeHtml(job.name)}</p>
           <p class="job-client">${escapeHtml(job.client || "No client set")}</p>
@@ -234,7 +259,7 @@
 
     card.addEventListener("click", () => openModal(job.id));
 
-    if (!job.archived) {
+    if (isSortable) {
       card.addEventListener("dragstart", (e) => {
         card.classList.add("dragging");
         e.dataTransfer.effectAllowed = "move";
@@ -272,17 +297,19 @@
 
   function renderStats() {
     const activeJobs = jobs.filter((j) => j.type === "active" && !j.archived);
-    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived);
+    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived && !j.submitted);
+    const submittedJobs = jobs.filter((j) => j.type === "bidding" && !j.archived && j.submitted);
     const dueSoon = biddingJobs.filter((j) => {
       const d = daysUntil(j.keyDate);
       return d !== null && d >= 0 && d <= 7;
     });
-    const overdue = jobs.filter((j) => !j.archived && daysUntil(j.keyDate) !== null && daysUntil(j.keyDate) < 0);
+    const overdue = biddingJobs.filter((j) => daysUntil(j.keyDate) !== null && daysUntil(j.keyDate) < 0);
     const remindersDue = outstandingReminderCount();
 
     statsEl.innerHTML = `
       <span class="stat-pill"><strong>${activeJobs.length}</strong> active</span>
       <span class="stat-pill"><strong>${biddingJobs.length}</strong> bidding</span>
+      ${submittedJobs.length ? `<span class="stat-pill"><strong>${submittedJobs.length}</strong> 📨 submitted</span>` : ""}
       <span class="stat-pill ${dueSoon.length ? "warn" : ""}"><strong>${dueSoon.length}</strong> bids due in 7d</span>
       ${overdue.length ? `<span class="stat-pill danger"><strong>${overdue.length}</strong> overdue</span>` : ""}
       ${remindersDue ? `<span class="stat-pill danger"><strong>${remindersDue}</strong> 🔔 due</span>` : ""}
@@ -291,15 +318,20 @@
 
   function render() {
     const activeJobs = jobs.filter((j) => j.type === "active" && !j.archived).sort((a, b) => a.order - b.order);
-    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived).sort((a, b) => a.order - b.order);
+    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived && !j.submitted).sort((a, b) => a.order - b.order);
+    const submittedJobs = jobs
+      .filter((j) => j.type === "bidding" && !j.archived && j.submitted)
+      .sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
     const archivedJobs = jobs.filter((j) => j.archived).sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
 
     renderList(activeListEl, activeJobs);
     renderList(biddingListEl, biddingJobs);
+    renderList(submittedListEl, submittedJobs);
     renderList(archiveListEl, archivedJobs);
 
     document.getElementById("active-count").textContent = activeJobs.length;
     document.getElementById("bidding-count").textContent = biddingJobs.length;
+    document.getElementById("submitted-count").textContent = submittedJobs.length;
     document.getElementById("archive-count").textContent = archivedJobs.length;
 
     renderStats();
@@ -367,6 +399,8 @@
         type,
         archived: false,
         archivedReason: null,
+        submitted: false,
+        submittedAt: null,
         name: "",
         client: "",
         location: "",
@@ -392,6 +426,14 @@
     archivePanel.classList.toggle("hidden", !archiveVisible);
     archiveToggleBtn.textContent = archiveVisible ? "Hide Archive" : "Archive";
     if (archiveVisible) archivePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  const submittedToggleBtn = document.getElementById("submitted-toggle-btn");
+  submittedToggleBtn.addEventListener("click", () => {
+    submittedVisible = !submittedVisible;
+    submittedPanel.classList.toggle("hidden", !submittedVisible);
+    submittedToggleBtn.textContent = submittedVisible ? "Hide Submitted" : "📨 Submitted";
+    if (submittedVisible) submittedPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   // ---------------- Export / Import (real file on disk) ----------------
@@ -1030,7 +1072,7 @@
 
     modalBody.innerHTML = `
       <h2>${escapeHtml(job.name) || "Untitled Job"}</h2>
-      <p class="modal-subtitle">${isBid ? "Bid checklist" : "Job task list"} — ${prog.done}/${prog.total} complete</p>
+      <p class="modal-subtitle">${modalSubtitleText(job, prog)}</p>
 
       <div class="field-grid">
         <div class="field full">
@@ -1083,8 +1125,10 @@
             job.archived
               ? ""
               : isBid
-              ? `<button class="btn btn-primary btn-small" id="mark-won">✓ Won — Move to Active</button>
-                 <button class="btn btn-secondary btn-small" id="mark-lost">Mark Lost</button>`
+              ? `${job.submitted ? "" : `<button class="btn btn-secondary btn-small" id="mark-submitted">📨 Mark Submitted</button>`}
+                 <button class="btn btn-primary btn-small" id="mark-won">✓ Won — Move to Active</button>
+                 <button class="btn btn-secondary btn-small" id="mark-lost">Mark Lost</button>
+                 ${job.submitted ? `<button class="btn btn-ghost btn-small" id="back-to-bidding">↺ Back to Bidding</button>` : ""}`
               : `<button class="btn btn-primary btn-small" id="mark-complete">✓ Mark Complete</button>`
           }
         </div>
@@ -1203,7 +1247,7 @@
 
     function updateProgressLabels() {
       const p = progressOf(job);
-      modalBody.querySelector(".modal-subtitle").textContent = `${isBid ? "Bid checklist" : "Job task list"} — ${p.done}/${p.total} complete`;
+      modalBody.querySelector(".modal-subtitle").textContent = modalSubtitleText(job, p);
       modalBody.querySelector(".section-title small").textContent = `${p.done}/${p.total} done`;
     }
 
@@ -1235,10 +1279,34 @@
       }
     });
 
+    const submittedBtn = document.getElementById("mark-submitted");
+    if (submittedBtn) {
+      submittedBtn.addEventListener("click", () => {
+        job.submitted = true;
+        job.submittedAt = todayStr();
+        saveJobs();
+        closeModal();
+        render();
+      });
+    }
+
+    const backToBiddingBtn = document.getElementById("back-to-bidding");
+    if (backToBiddingBtn) {
+      backToBiddingBtn.addEventListener("click", () => {
+        job.submitted = false;
+        job.submittedAt = null;
+        job.order = jobs.filter((j) => j.type === "bidding" && !j.archived && !j.submitted).length;
+        saveJobs();
+        closeModal();
+        render();
+      });
+    }
+
     const wonBtn = document.getElementById("mark-won");
     if (wonBtn) {
       wonBtn.addEventListener("click", () => {
         job.type = "active";
+        job.submitted = false;
         job.tasks = job.tasks && job.tasks.length ? job.tasks : makeChecklist(ACTIVE_STARTER_TASKS);
         job.order = jobs.filter((j) => j.type === "active" && !j.archived).length;
         saveJobs();
@@ -1286,11 +1354,16 @@
   function updateCardsOnly() {
     // Lightweight re-render of just the board cards (not the modal) to reflect edits live.
     const activeJobs = jobs.filter((j) => j.type === "active" && !j.archived).sort((a, b) => a.order - b.order);
-    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived).sort((a, b) => a.order - b.order);
+    const biddingJobs = jobs.filter((j) => j.type === "bidding" && !j.archived && !j.submitted).sort((a, b) => a.order - b.order);
+    const submittedJobs = jobs
+      .filter((j) => j.type === "bidding" && !j.archived && j.submitted)
+      .sort((a, b) => (b.submittedAt || "").localeCompare(a.submittedAt || ""));
     const archivedJobs = jobs.filter((j) => j.archived).sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
     renderList(activeListEl, activeJobs);
     renderList(biddingListEl, biddingJobs);
+    renderList(submittedListEl, submittedJobs);
     renderList(archiveListEl, archivedJobs);
+    document.getElementById("submitted-count").textContent = submittedJobs.length;
     renderStats();
   }
 
