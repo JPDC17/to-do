@@ -32,7 +32,6 @@ A single-page to-do board built for construction estimating and project manageme
 - **Connect Save File** (Chrome/Edge only): link an actual file on disk once, and the app automatically loads it on startup and writes to it on every change — no more clicking Export/Import by hand. See below.
 - **Task reminders**: click the 🔔 on any checklist/task item to set a date & time. While the app's open, it fires a native OS notification plus an in-app pop-up when that time arrives (once), and shows a "🔔 N due" count in the header.
 - **Productivity timer**: a Pomodoro-style focus timer (**⏱ Timer** in the header) — Focus/Short Break/Long Break cycles with adjustable durations, a chime + notification when a session ends, and the header button doubles as a live countdown so you can close the panel and keep working.
-- **Bulldozer Run** (**🚜 Game** in the header): a break-time endless runner in a 16-bit pixel-art style — jump the bulldozer over dirt piles with Space/↑/click, speed ramps up the longer you survive, and your best score is saved locally and shown every time you play.
 
 ## Running it
 
@@ -98,5 +97,4 @@ Notes:
 - `style.css` — styling
 - `app.js` — app logic and data model (vanilla JS, no dependencies)
 - `manifest.json` / `sw.js` / `icons/` — PWA install support (app icon, offline caching)
-- `game.js` — the Bulldozer Run mini-game (self-contained, code-drawn pixel art, no image assets)
 - `desktop/` — Electron wrapper that packages the app as a standalone Windows `.exe`

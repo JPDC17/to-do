@@ -31,7 +31,6 @@
           "index.html",
           "style.css",
           "app.js",
-          "game.js",
           "manifest.json",
           "sw.js",
           "icons/**/*"
