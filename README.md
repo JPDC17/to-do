@@ -86,9 +86,11 @@ npm run dist:win
 
 The finished executable lands at `desktop/dist/TaskSheet-Portable.exe` — a single **portable** file (no installer, nothing written to Program Files). Copy it anywhere and double-click to run; it carries its own copy of the app.
 
+**Auto-loading save file**: unlike the browser version, the desktop app doesn't need a manual "Connect Save File" step at all. It automatically reads and writes a `task-sheet-data.json` file in its own app-data folder (via a small Electron `preload.js` bridge to the main process, so it never touches Node APIs from the page itself) every time it starts — the very first launch creates and seeds that file, and every launch after that loads straight from it. A brief loading overlay covers the board until that read finishes (usually instant, but there in case it isn't). `localStorage` is still kept in sync too, purely as a redundant local cache.
+
 Notes:
 - It's unsigned (no paid code-signing certificate), so Windows SmartScreen will likely show an "unknown publisher" warning the first time you run it — click **More info → Run anyway**. This is normal for small independent tools and not a sign anything is wrong.
-- Data still saves via the same `localStorage` (and Connect Save File, Export/Import) as the browser version — those all work identically inside Electron's window, since it's the same Chromium engine under the hood.
+- Export/Import and Connect Save File still work identically inside Electron's window if you want a portable backup or a synced-folder copy, on top of the automatic save file above.
 - It's noticeably larger than the web files alone (~70MB) because Electron bundles its own copy of Chromium and Node.js so it needs no browser installed at all.
 - To rebuild after changing the icon, regenerate `desktop/build/icon.ico` (any standard multi-resolution `.ico`, ideally including a 256×256 entry) before running `npm run dist:win`.
 

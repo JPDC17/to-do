@@ -1,5 +1,6 @@
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 function resolveAppPath(...segments) {
   const base = app.isPackaged
@@ -7,6 +8,32 @@ function resolveAppPath(...segments) {
     : path.join(__dirname, "..");
   return path.join(base, ...segments);
 }
+
+function getSaveFilePath() {
+  return path.join(app.getPath("userData"), "task-sheet-data.json");
+}
+
+ipcMain.handle("tasksheet:load-jobs", () => {
+  const filePath = getSaveFilePath();
+  try {
+    if (!fs.existsSync(filePath)) return null; // no file yet -> renderer should seed
+    const parsed = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+});
+
+ipcMain.handle("tasksheet:save-jobs", (event, jobs) => {
+  try {
+    fs.writeFileSync(getSaveFilePath(), JSON.stringify(jobs, null, 2), "utf8");
+    return true;
+  } catch (e) {
+    return false;
+  }
+});
+
+ipcMain.handle("tasksheet:get-save-path", () => getSaveFilePath());
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -21,6 +48,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 

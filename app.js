@@ -142,7 +142,7 @@
     }
     if (saveStatusEl) {
       const now = new Date();
-      const dest = connectedFileHandle ? `to ${connectedFileHandle.name}` : "to this browser";
+      const dest = window.taskSheetDesktop ? "to your save file" : connectedFileHandle ? `to ${connectedFileHandle.name}` : "to this browser";
       saveStatusEl.textContent = `Saved ${dest} at ${now.toLocaleTimeString()}`;
       clearTimeout(saveStatusTimer);
       saveStatusTimer = setTimeout(() => {
@@ -150,6 +150,9 @@
       }, 4000);
     }
     writeToConnectedFile();
+    if (window.taskSheetDesktop) {
+      window.taskSheetDesktop.saveJobs(jobs).catch(() => {});
+    }
     checkBackupReminder();
   }
 
@@ -1400,12 +1403,40 @@
   });
 
   // ---------------- Init ----------------
-  render();
-  if (FS_SUPPORTED) setConnectUiState("none");
-  tryAutoLoadFromConnectedFile().then(() => {
+
+  const loadingOverlay = document.getElementById("app-loading-overlay");
+  function hideLoadingOverlay() {
+    if (loadingOverlay) loadingOverlay.classList.add("hidden");
+  }
+
+  async function initApp() {
+    if (window.taskSheetDesktop) {
+      // Desktop app: the save file on disk is the source of truth, loaded
+      // automatically every launch — no manual "connect" step required.
+      try {
+        const desktopJobs = await window.taskSheetDesktop.loadJobs();
+        if (Array.isArray(desktopJobs)) {
+          jobs = desktopJobs;
+        } else {
+          // No save file yet (first launch on this machine) - seed it and write the file now.
+          jobs = seedData();
+          await window.taskSheetDesktop.saveJobs(jobs);
+        }
+      } catch (e) {
+        // Fall back to whatever localStorage already provided.
+      }
+    }
+
+    hideLoadingOverlay();
+    render();
+    if (FS_SUPPORTED) setConnectUiState("none");
+    tryAutoLoadFromConnectedFile().then(() => {
+      checkBackupReminder();
+      checkReminders();
+    });
     checkBackupReminder();
     checkReminders();
-  });
-  checkBackupReminder();
-  checkReminders();
+  }
+
+  initApp();
 })();

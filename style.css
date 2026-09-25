@@ -507,6 +507,37 @@ body {
 
 .hidden { display: none !important; }
 
+/* ---------- Startup loading overlay ---------- */
+.app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.app-loading-overlay p {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+.app-loading-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 4px solid var(--line);
+  border-top-color: var(--orange);
+  animation: app-loading-spin 0.8s linear infinite;
+}
+@keyframes app-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ---------- Modal ---------- */
 .modal-backdrop {
   position: fixed;
