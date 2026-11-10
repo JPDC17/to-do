@@ -34,7 +34,8 @@
           "app.js",
           "manifest.json",
           "sw.js",
-          "icons/**/*"
+          "icons/**/*",
+          "fonts/**/*"
         ]
       }
     ],

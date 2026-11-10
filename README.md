@@ -100,4 +100,5 @@ Notes:
 - `style.css` — styling
 - `app.js` — app logic and data model (vanilla JS, no dependencies)
 - `manifest.json` / `sw.js` / `icons/` — PWA install support (app icon, offline caching)
+- `fonts/` — self-hosted Roboto Condensed (Light/Regular/Italic/Bold/Bold Italic), used for all headings and UI text so the app doesn't depend on Google Fonts being reachable
 - `desktop/` — Electron wrapper that packages the app as a standalone Windows `.exe`
