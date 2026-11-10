@@ -1,28 +1,28 @@
 :root {
-  --bg: #e8dcc0;
-  --bg-panel: #ddcc9f;
-  --bg-card: #fbf6ea;
-  --bg-input: #f3ecd8;
-  --ink: #2a2f22;
-  --ink-soft: #5f5940;
-  --ink-faint: #8c8262;
-  --line: #cab984;
-  --line-strong: #b09d68;
-  --navy: #2c3e50;
-  --orange: #d9662a;
-  --orange-dark: #b8511e;
-  --orange-soft: #f6e2cd;
-  --red: #c0392b;
-  --red-soft: #f6dcd6;
-  --green: #3f7d58;
-  --green-soft: #e0ead9;
-  --amber: #b9821c;
-  --amber-soft: #f5e8c8;
+  --bg: #f6f4f8;
+  --bg-panel: #efeaf3;
+  --bg-card: #ffffff;
+  --bg-input: #faf9fb;
+  --ink: #4b4453;
+  --ink-soft: #6f6672;
+  --ink-faint: #9b93a1;
+  --line: #e3dee8;
+  --line-strong: #b0a8b9;
+  --navy: #4b4453;
+  --orange: #845ec2;
+  --orange-dark: #6c4aa3;
+  --orange-soft: #ece4f7;
+  --red: #c34a36;
+  --red-soft: #f8e1dc;
+  --green: #6c4aa3;
+  --green-soft: #ece4f7;
+  --amber: #ff8066;
+  --amber-soft: #ffe4dc;
   --radius: 12px;
-  --shadow: 0 1px 2px rgba(42, 34, 20, 0.06), 0 3px 10px rgba(42, 34, 20, 0.07);
-  --shadow-lg: 0 16px 36px rgba(42, 34, 20, 0.16);
-  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+  --shadow: 0 1px 2px rgba(75, 68, 83, 0.07), 0 3px 10px rgba(75, 68, 83, 0.08);
+  --shadow-lg: 0 16px 36px rgba(75, 68, 83, 0.18);
+  --font-display: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Roboto Mono", "Courier New", monospace;
 }
 
 * { box-sizing: border-box; }
@@ -409,7 +409,7 @@ body {
   transition: width 0.2s ease;
 }
 .progress-fill.complete {
-  background: linear-gradient(90deg, var(--green), #4f9968);
+  background: linear-gradient(90deg, var(--green), #9b7bd1);
 }
 .progress-label {
   font-size: 11.5px;
