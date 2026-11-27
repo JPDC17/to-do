@@ -3,14 +3,22 @@
   "version": "1.0.0",
   "description": "Task Sheet — construction estimator & PM to-do board, packaged as a desktop app",
   "main": "main.js",
+  "author": "JPDC17",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win portable --x64"
+    "test": "node --test test/*.test.js",
+    "dist:win": "electron-builder --win portable nsis --x64",
+    "release": "electron-builder --win portable nsis --x64 --publish never && node scripts/write-manifest.js"
   },
   "devDependencies": {
     "electron": "33.4.11",
     "electron-builder": "^25.0.0"
+  },
+  "updates": {
+    "manifest": "https://github.com/JPDC17/to-do/releases/latest/download/latest.json",
+    "download": "https://github.com/JPDC17/to-do/releases/download/v{version}/TaskSheet-Portable.exe",
+    "setupDownload": "https://github.com/JPDC17/to-do/releases/download/v{version}/TaskSheet-Setup.exe"
   },
   "build": {
     "appId": "com.tasksheet.app",
@@ -19,9 +27,11 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "compression": "maximum",
     "files": [
       "main.js",
       "preload.js",
+      "updater.js",
       "package.json"
     ],
     "extraResources": [
@@ -41,12 +51,23 @@
     ],
     "win": {
       "target": [
-        { "target": "portable", "arch": ["x64"] }
+        { "target": "portable", "arch": ["x64"] },
+        { "target": "nsis", "arch": ["x64"] }
       ],
       "icon": "build/icon.ico"
     },
     "portable": {
       "artifactName": "TaskSheet-Portable.exe"
+    },
+    "nsis": {
+      "artifactName": "TaskSheet-Setup.exe",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Task Sheet",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
     }
   }
 }

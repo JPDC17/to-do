@@ -1,0 +1,100 @@
+# Builds and publishes Task Sheet's desktop app on GitHub's Windows machines.
+#
+# On every push: run the updater unit tests, the real-Windows update swap test, and an
+# end-to-end test where a real packaged exe (and installer) updates itself to a newer
+# one. A release is only published if all of these pass.
+# If desktop/package.json has a version that hasn't been released yet, also build the
+# portable exe and the installer and publish them as a GitHub Release, tagged
+# v<version>, with latest.json (which the app's update button reads). The release notes,
+# also shown in the app's update prompt, come from RELEASE_NOTES.md.
+name: Release
+
+on:
+  push:
+    branches: [claude/construction-estimator-todo-app-altliy, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to create the release and its tag
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install
+        working-directory: desktop
+        run: npm ci
+
+      - name: Unit tests
+        working-directory: desktop
+        run: npm test
+
+      - name: Update swap test (real Windows PowerShell)
+        working-directory: desktop
+        run: node scripts/test-swap-windows.js
+
+      - name: Build test copies (current, and a fake newer 9.9.9; portable and installer)
+        working-directory: desktop
+        shell: bash
+        run: |
+          npx electron-builder --win portable nsis --x64 --publish never -c.directories.output=e2e-old
+          npx electron-builder --win portable nsis --x64 --publish never -c.directories.output=e2e-new -c.extraMetadata.version=9.9.9
+
+      - name: Update end to end (the real exe updates itself on Windows)
+        working-directory: desktop
+        shell: powershell
+        run: .\scripts\e2e-update-windows.ps1 -Old e2e-old\TaskSheet-Portable.exe -New e2e-new\TaskSheet-Portable.exe
+
+      - name: Installer end to end (install, then the installed app updates itself)
+        working-directory: desktop
+        shell: powershell
+        run: .\scripts\e2e-install-windows.ps1 -Old e2e-old\TaskSheet-Setup.exe -New e2e-new\TaskSheet-Setup.exe
+
+      - name: Is this version new?
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./desktop/package.json').version")
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "v$version is already released; nothing to publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "v$version is new; it will be built and published."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the portable exe and the installer
+        if: steps.version.outputs.publish == 'true'
+        working-directory: desktop
+        run: npx electron-builder --win portable nsis --x64 --publish never
+
+      - name: Write latest.json
+        if: steps.version.outputs.publish == 'true'
+        working-directory: desktop
+        shell: bash
+        run: node scripts/write-manifest.js "$(cat ../RELEASE_NOTES.md 2>/dev/null)"
+
+      - name: Publish the release
+        if: steps.version.outputs.publish == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" desktop/dist/TaskSheet-Portable.exe desktop/dist/TaskSheet-Setup.exe desktop/latest.json \
+            --target "$GITHUB_SHA" --title "Task Sheet ${{ steps.version.outputs.tag }}" \
+            --notes-file RELEASE_NOTES.md --latest

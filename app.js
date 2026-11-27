@@ -1433,6 +1433,90 @@
     deferredInstallPrompt = null;
   });
 
+  // ---------------- Desktop auto-update ----------------
+
+  function initUpdates() {
+    if (!window.taskSheetDesktop || !window.taskSheetDesktop.checkUpdate) return;
+    const updateBtn = document.getElementById("update-btn");
+    if (!updateBtn) return;
+    let updateInfo = null;
+    let updating = false;
+
+    window.taskSheetDesktop
+      .appVersion()
+      .then((v) => {
+        updateBtn.textContent = `Task Sheet v${v}`;
+        updateBtn.classList.remove("hidden");
+      })
+      .catch(() => {});
+
+    async function checkUpdatesQuiet(silent) {
+      try {
+        const r = await window.taskSheetDesktop.checkUpdate();
+        updateInfo = r.available ? r : null;
+        updateBtn.textContent = r.available ? `Update to v${r.latest}` : `Task Sheet v${r.current}`;
+        updateBtn.classList.toggle("needs-attention", !!r.available);
+        updateBtn.classList.remove("hidden");
+        if (!silent) {
+          if (r.available) offerUpdate();
+          else alert(`You have the latest version (${r.current}).`);
+        }
+      } catch (e) {
+        if (!silent) alert(`Could not check for updates: ${e.message}`);
+      }
+    }
+
+    async function offerUpdate() {
+      if (updating) {
+        alert("The update is already downloading.");
+        return;
+      }
+      if (!updateInfo) {
+        checkUpdatesQuiet(false);
+        return;
+      }
+      const mb = Math.round(updateInfo.size / 1048576);
+      const ok = confirm(
+        `Version ${updateInfo.latest} is available (you have ${updateInfo.current}).` +
+          `${updateInfo.notes ? `\n\n${updateInfo.notes}` : ""}` +
+          `\n\nDownload it (${mb} MB) and restart Task Sheet now?`
+      );
+      if (!ok) return;
+      updating = true;
+      const previousLabel = updateBtn.textContent;
+      updateBtn.textContent = "Downloading…";
+      try {
+        const r = await window.taskSheetDesktop.installUpdate();
+        if (r.restarting) {
+          updateBtn.textContent = `Installing v${r.version}…`;
+        } else if (r.file) {
+          alert("The update was downloaded but could not be installed automatically. Its folder has been opened. Run the new file from there.");
+          updateBtn.textContent = previousLabel;
+        } else {
+          alert("The download has been opened in your browser.");
+          updateBtn.textContent = previousLabel;
+        }
+      } catch (e) {
+        alert(`The update did not install: ${e.message}`);
+        updateBtn.textContent = previousLabel;
+      } finally {
+        updating = false;
+      }
+    }
+
+    updateBtn.addEventListener("click", () => {
+      if (updateInfo) offerUpdate();
+      else checkUpdatesQuiet(false);
+    });
+
+    window.taskSheetDesktop.onUpdateProgress((p) => {
+      const pct = p.total ? Math.min(100, Math.floor((p.received / p.total) * 100)) : 0;
+      updateBtn.textContent = `Downloading… ${pct}%`;
+    });
+
+    setTimeout(() => checkUpdatesQuiet(true), 4000);
+  }
+
   // ---------------- Init ----------------
 
   const loadingOverlay = document.getElementById("app-loading-overlay");
@@ -1471,4 +1555,5 @@
 
   initTheme();
   initApp();
+  initUpdates();
 })();
