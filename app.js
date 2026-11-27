@@ -900,13 +900,18 @@
 
   // ---------------- Connected save file (auto-load / auto-save via File System Access API) ----------------
 
-  const FS_SUPPORTED = "showSaveFilePicker" in window && "indexedDB" in window;
+  // The desktop app already auto-loads/auto-saves to a file on disk (see the
+  // taskSheetDesktop IPC bridge above), so the browser's separate "connect a file"
+  // flow is web-only even though Electron's Chromium also exposes the File System
+  // Access API.
+  const FS_SUPPORTED = !window.taskSheetDesktop && "showSaveFilePicker" in window && "indexedDB" in window;
   const IDB_NAME = "site_board_fs";
   const IDB_STORE = "handles";
   const IDB_KEY = "saveFile";
 
   let connectedFileHandle = null;
   const connectFileBtn = document.getElementById("connect-file-btn");
+  const moreMenuBtn = document.getElementById("more-menu-btn");
 
   function openIdb() {
     return new Promise((resolve, reject) => {
@@ -955,14 +960,20 @@
     if (!FS_SUPPORTED) return;
     connectFileBtn.classList.remove("hidden");
     connectFileBtn.classList.remove("connected", "needs-attention");
+    // The button lives inside the collapsed "More" menu, so mirror its connected /
+    // needs-attention state onto the menu's own toggle button, otherwise that status
+    // would be invisible unless the menu happens to be open.
+    if (moreMenuBtn) moreMenuBtn.classList.remove("connected", "needs-attention");
     if (state === "connected") {
       connectFileBtn.textContent = `🔗 ${name}`;
       connectFileBtn.title = "Auto-syncing to this file. Click to disconnect.";
       connectFileBtn.classList.add("connected");
+      if (moreMenuBtn) moreMenuBtn.classList.add("connected");
     } else if (state === "needs-attention") {
       connectFileBtn.textContent = `🔗 Reconnect ${name}`;
       connectFileBtn.title = "Click to resume auto-sync with this file";
       connectFileBtn.classList.add("needs-attention");
+      if (moreMenuBtn) moreMenuBtn.classList.add("needs-attention");
     } else {
       connectFileBtn.textContent = "🔗 Connect Save File";
       connectFileBtn.title = "Link a file on disk that auto-loads and auto-saves every time you open this app";
@@ -1432,6 +1443,31 @@
     installBtn.classList.add("hidden");
     deferredInstallPrompt = null;
   });
+
+  // ---------------- More menu (collapses Connect Save File / Export / Import) ----------------
+
+  const moreMenuDropdown = document.getElementById("more-menu-dropdown");
+  if (moreMenuBtn && moreMenuDropdown) {
+    const closeMoreMenu = () => {
+      moreMenuDropdown.classList.add("hidden");
+      moreMenuBtn.setAttribute("aria-expanded", "false");
+    };
+    moreMenuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const opening = moreMenuDropdown.classList.contains("hidden");
+      moreMenuDropdown.classList.toggle("hidden", !opening);
+      moreMenuBtn.setAttribute("aria-expanded", String(opening));
+    });
+    moreMenuDropdown.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", closeMoreMenu);
+    });
+    document.addEventListener("click", (e) => {
+      if (!moreMenuDropdown.classList.contains("hidden") && !e.target.closest(".more-menu")) closeMoreMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMoreMenu();
+    });
+  }
 
   // ---------------- Desktop auto-update ----------------
 

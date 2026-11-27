@@ -158,6 +158,45 @@ body {
   align-items: center;
 }
 
+.more-menu { position: relative; }
+.more-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+}
+.more-menu-dropdown .btn { width: 100%; justify-content: flex-start; text-align: left; }
+
+.version-pill {
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.2px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.version-pill:hover { color: var(--orange-dark); background: var(--orange-soft); }
+.version-pill.needs-attention {
+  color: var(--amber-text);
+  background: var(--amber-soft);
+  font-weight: 700;
+}
+
 .backup-banner {
   width: calc(100% - 40px);
   max-width: 1360px;
@@ -395,9 +434,8 @@ body {
 }
 .job-card:hover { box-shadow: var(--shadow-lg); border-color: var(--line-strong); }
 .job-card.dragging { opacity: 0.4; }
-.job-card.priority-high { border-left-color: var(--red); }
-.job-card.priority-medium { border-left-color: var(--amber); }
-.job-card.priority-low { border-left-color: var(--ink-faint); }
+/* Priority is already shown by the HIGH/MEDIUM/LOW badge; the left edge stays a
+   neutral accent rather than repeating the same color-coding a second way. */
 
 .job-card-top {
   display: flex;
@@ -915,8 +953,8 @@ body {
 
 .timer-panel {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  top: 70px;
+  right: 24px;
   z-index: 200;
   width: 280px;
   background: var(--bg-card);
