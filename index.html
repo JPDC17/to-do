@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Task Sheet — Estimating &amp; Project To-Do</title>
+<script>
+  // Applies the saved light/dark theme before the page first paints, so there's no flash of the wrong theme.
+  try {
+    var savedTheme = localStorage.getItem("site_board_theme_v1");
+    if (savedTheme === "dark") document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -11,7 +18,7 @@
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
-<meta name="theme-color" content="#845ec2" />
+<meta name="theme-color" content="#ff9900" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="Task Sheet" />
 </head>
@@ -42,6 +49,10 @@
     <input type="file" id="import-file-input" accept="application/json" class="hidden" />
     <button class="btn btn-ghost" id="submitted-toggle-btn">📨 Submitted</button>
     <button class="btn btn-ghost" id="archive-toggle-btn">Archive</button>
+    <button class="theme-toggle" id="theme-toggle" role="switch" aria-checked="false" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <span class="switch" aria-hidden="true"></span>
+      <span id="theme-toggle-label">Dark</span>
+    </button>
   </div>
 </header>
 <div class="segment-divider" aria-hidden="true"></div>

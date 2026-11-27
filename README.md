@@ -33,6 +33,7 @@ A single-page to-do board built for construction estimating and project manageme
 - **Connect Save File** (Chrome/Edge only): link an actual file on disk once, and the app automatically loads it on startup and writes to it on every change — no more clicking Export/Import by hand. See below.
 - **Task reminders**: click the 🔔 on any checklist/task item to set a date & time. While the app's open, it fires a native OS notification plus an in-app pop-up when that time arrives (once), and shows a "🔔 N due" count in the header.
 - **Productivity timer**: a Pomodoro-style focus timer (**⏱ Timer** in the header) — Focus/Short Break/Long Break cycles with adjustable durations, a chime + notification when a session ends, and the header button doubles as a live countdown so you can close the panel and keep working.
+- **Light / dark theme**: the toggle in the top-right of the header switches the whole app between a light and dark theme (same charcoal/orange/safety-yellow palette and self-hosted Roboto Condensed font as the companion job costing app). Your choice is remembered and applied instantly on the next launch — no flash of the wrong theme.
 
 ## Running it
 

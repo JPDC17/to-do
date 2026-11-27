@@ -1,4 +1,4 @@
-const CACHE_NAME = "site-board-v4";
+const CACHE_NAME = "site-board-v5";
 const CORE_ASSETS = [
   "./",
   "./index.html",

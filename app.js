@@ -5,6 +5,7 @@
   const LAST_EXPORT_KEY = "site_board_last_export_at";
   const FIRST_USE_KEY = "site_board_first_use_at";
   const SNOOZE_KEY = "site_board_backup_snooze_until";
+  const THEME_KEY = "site_board_theme_v1";
   const REMINDER_INTERVAL_MS = 7 * 86400000;
   const SNOOZE_MS = 3 * 86400000;
 
@@ -170,6 +171,36 @@
   const archivePanel = document.getElementById("archive-panel");
   const submittedPanel = document.getElementById("submitted-panel");
   const archiveToggleBtn = document.getElementById("archive-toggle-btn");
+
+  const themeToggleBtn = document.getElementById("theme-toggle");
+  const themeToggleLabel = document.getElementById("theme-toggle-label");
+
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.documentElement.dataset.theme = "dark";
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+    if (themeToggleBtn) themeToggleBtn.setAttribute("aria-checked", theme === "dark" ? "true" : "false");
+    if (themeToggleLabel) themeToggleLabel.textContent = theme === "dark" ? "Light" : "Dark";
+  }
+
+  function initTheme() {
+    let saved = "light";
+    try {
+      saved = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+    } catch (e) {}
+    applyTheme(saved);
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(next);
+        try {
+          localStorage.setItem(THEME_KEY, next);
+        } catch (e) {}
+      });
+    }
+  }
 
   function itemsFor(job) {
     return job.type === "bidding" ? job.checklist : job.tasks;
@@ -1438,5 +1469,6 @@
     checkReminders();
   }
 
+  initTheme();
   initApp();
 })();
