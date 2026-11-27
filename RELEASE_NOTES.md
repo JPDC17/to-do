@@ -1,1 +1,1 @@
-First release built by CI: the new charcoal/orange/yellow theme with a light/dark toggle, and the desktop app can now update itself automatically.
+Cleaned up the topbar (Export/Import/Connect Save File are now tucked into a "More" menu instead of crowding the bar), fixed Connect Save File incorrectly showing in the desktop app, simplified the priority indicator on job cards, and moved the productivity timer panel to open near the topbar instead of a fixed corner.

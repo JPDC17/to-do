@@ -1,6 +1,6 @@
 {
   "name": "task-sheet-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Task Sheet — construction estimator & PM to-do board, packaged as a desktop app",
   "main": "main.js",
   "author": "JPDC17",
